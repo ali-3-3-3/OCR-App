@@ -1,12 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
 import '../services/permission_service.dart';
 import '../services/image_service.dart';
 import '../utils/app_utils.dart';
+import '../utils/test_image_generator.dart';
 import '../widgets/device_type_selector.dart';
 
 class GalleryPickerScreen extends StatefulWidget {
@@ -30,7 +29,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.defaultPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,9 +52,9 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
                 });
               },
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Image selection options
             const Text(
               'Select Image Source',
@@ -66,37 +65,44 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            
-            Expanded(
-              child: Column(
-                children: [
-                  // Gallery option
-                  _buildImageSourceOption(
-                    icon: Icons.photo_library,
-                    title: 'Choose from Gallery',
-                    subtitle: 'Select an existing photo from your device',
-                    color: AppColors.primary,
-                    onTap: () => _pickImageFromGallery(),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Camera option
-                  _buildImageSourceOption(
-                    icon: Icons.camera_alt,
-                    title: 'Take Photo',
-                    subtitle: 'Capture a new photo with your camera',
-                    color: AppColors.secondary,
-                    onTap: () => _pickImageFromCamera(),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Tips section
-                  _buildTipsSection(),
-                ],
-              ),
+
+            // Gallery option
+            _buildImageSourceOption(
+              icon: Icons.photo_library,
+              title: 'Choose from Gallery',
+              subtitle: 'Select an existing photo from your device',
+              color: AppColors.primary,
+              onTap: () => _pickImageFromGallery(),
             ),
+
+            const SizedBox(height: 16),
+
+            // Camera option
+            _buildImageSourceOption(
+              icon: Icons.camera_alt,
+              title: 'Take Photo',
+              subtitle: 'Capture a new photo with your camera',
+              color: AppColors.secondary,
+              onTap: () => _pickImageFromCamera(),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Test image option
+            _buildImageSourceOption(
+              icon: Icons.science,
+              title: 'Use Test Image',
+              subtitle: 'Use a sample blood pressure reading for testing',
+              color: AppColors.accent,
+              onTap: () => _useTestImage(),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Tips section
+            _buildTipsSection(),
+
+            const SizedBox(height: 32), // Bottom padding
           ],
         ),
       ),
@@ -127,11 +133,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 32,
-              ),
+              child: Icon(icon, color: color, size: 32),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -188,11 +190,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
         children: [
           const Row(
             children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: AppColors.info,
-                size: 20,
-              ),
+              Icon(Icons.lightbulb_outline, color: AppColors.info, size: 20),
               SizedBox(width: 8),
               Text(
                 'Tips for Better OCR Results',
@@ -205,30 +203,34 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ..._getTipsForDevice(_selectedDeviceType).map((tip) => Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '• ',
-                  style: TextStyle(
-                    color: AppColors.info,
-                    fontWeight: FontWeight.bold,
+          ..._getTipsForDevice(_selectedDeviceType)
+              .map(
+                (tip) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '• ',
+                        style: TextStyle(
+                          color: AppColors.info,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          tip,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: Text(
-                    tip,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          )).toList(),
+              )
+              .toList(),
         ],
       ),
     );
@@ -280,8 +282,10 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
     });
 
     try {
-      // Check permissions
-      final hasPermissions = await PermissionService().ensureCameraPermissions(context);
+      // Check gallery permissions
+      final hasPermissions = await PermissionService().ensureGalleryPermissions(
+        context,
+      );
       if (!hasPermissions) {
         return;
       }
@@ -321,7 +325,9 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
 
     try {
       // Check permissions
-      final hasPermissions = await PermissionService().ensureCameraPermissions(context);
+      final hasPermissions = await PermissionService().ensureCameraPermissions(
+        context,
+      );
       if (!hasPermissions) {
         return;
       }
@@ -358,7 +364,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
     try {
       // Validate the image
       final validation = await _imageService.validateImageForOcr(imagePath);
-      
+
       if (!validation.isValid) {
         if (mounted) {
           _showValidationDialog(validation.issues);
@@ -398,16 +404,23 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
           children: [
             const Text('The selected image has the following issues:'),
             const SizedBox(height: 12),
-            ...issues.map((issue) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• ', style: TextStyle(color: AppColors.error)),
-                  Expanded(child: Text(issue)),
-                ],
-              ),
-            )).toList(),
+            ...issues
+                .map(
+                  (issue) => Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '• ',
+                          style: TextStyle(color: AppColors.error),
+                        ),
+                        Expanded(child: Text(issue)),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
             const SizedBox(height: 12),
             const Text(
               'You can still proceed, but OCR accuracy may be reduced.',
@@ -430,5 +443,34 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _useTestImage() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Create a test image based on selected device type
+      final testImagePath = await TestImageGenerator.generateTestImage(
+        _selectedDeviceType,
+      );
+
+      await _processSelectedImage(testImagePath);
+    } catch (e) {
+      if (mounted) {
+        AppUtils.showSnackBar(
+          context,
+          'Failed to create test image: $e',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

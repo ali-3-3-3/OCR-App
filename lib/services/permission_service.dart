@@ -200,6 +200,53 @@ class PermissionService {
 
     return true;
   }
+
+  // Check and request gallery permissions (for image picker)
+  Future<bool> ensureGalleryPermissions(BuildContext context) async {
+    // For gallery access, we only need storage/photos permission, not camera
+    final storageGranted = AppUtils.isAndroid
+        ? await isStoragePermissionGranted()
+        : await isPhotosPermissionGranted();
+
+    if (storageGranted) {
+      return true;
+    }
+
+    // Check if context is still valid after async operation
+    if (!context.mounted) return false;
+
+    // Request storage/photos permission with rationale
+    final userWantsToGrant = await showPermissionRationale(
+      context,
+      title: 'Storage Permission Required',
+      message:
+          'This app needs access to your photos to select images for OCR processing. '
+          'This allows you to choose existing photos of medical device displays.',
+    );
+
+    if (userWantsToGrant != true) {
+      return false;
+    }
+
+    // Request the appropriate permission
+    final success = AppUtils.isAndroid
+        ? await requestStoragePermission()
+        : await requestPhotosPermission();
+
+    if (!success) {
+      // Check if context is still valid after async operation
+      if (!context.mounted) return false;
+
+      AppUtils.showSnackBar(
+        context,
+        'Storage permission is required to access your photos. Please grant permission in app settings.',
+        isError: true,
+      );
+      return false;
+    }
+
+    return true;
+  }
 }
 
 enum PermissionResult { granted, denied, permanentlyDenied }

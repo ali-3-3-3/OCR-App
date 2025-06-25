@@ -49,7 +49,9 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
 
   @override
   void dispose() {
-    _controllers.values.forEach((controller) => controller.dispose());
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -74,6 +76,9 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
     final diastolic = _currentData['diastolic'] ?? 0;
     final pulse = _currentData['pulse'];
     final unit = _currentData['unit'] ?? 'mmHg';
+    final category = _currentData['category'] as String?;
+    final pulsePressure = _currentData['pulsePressure'] as int?;
+    final meanArterialPressure = _currentData['meanArterialPressure'] as int?;
 
     return Column(
       children: [
@@ -125,7 +130,27 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
             ],
           ),
         ),
-        
+
+        // Blood pressure category
+        if (category != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: _getCategoryColor(category),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              category,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+
         if (pulse != null) ...[
           const SizedBox(height: 16),
           _buildValueRow(
@@ -138,6 +163,35 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
               inputType: TextInputType.number,
               validator: _validatePulse,
             ),
+          ),
+        ],
+
+        // Additional metrics
+        if (pulsePressure != null || meanArterialPressure != null) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              if (pulsePressure != null) ...[
+                Expanded(
+                  child: _buildMetricCard(
+                    'Pulse Pressure',
+                    '$pulsePressure $unit',
+                    Icons.trending_up,
+                  ),
+                ),
+              ],
+              if (pulsePressure != null && meanArterialPressure != null)
+                const SizedBox(width: 12),
+              if (meanArterialPressure != null) ...[
+                Expanded(
+                  child: _buildMetricCard(
+                    'MAP',
+                    '$meanArterialPressure $unit',
+                    Icons.analytics,
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ],
@@ -156,7 +210,9 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
           decoration: BoxDecoration(
             color: AppColors.oxygenSaturation.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.oxygenSaturation.withOpacity(0.3)),
+            border: Border.all(
+              color: AppColors.oxygenSaturation.withOpacity(0.3),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -172,15 +228,12 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
               ),
               const Text(
                 '%',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 24, color: AppColors.textSecondary),
               ),
             ],
           ),
         ),
-        
+
         if (pulseRate != null) ...[
           const SizedBox(height: 16),
           _buildValueRow(
@@ -279,10 +332,7 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
           child: _buildValueRow(
             entry.key,
             Icons.info,
-            _buildEditableValue(
-              entry.key,
-              entry.value.toString(),
-            ),
+            _buildEditableValue(entry.key, entry.value.toString()),
           ),
         );
       }).toList(),
@@ -363,8 +413,11 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
   void _updateValue(String key, String value) {
     setState(() {
       // Try to parse as number if possible
-      if (key == 'systolic' || key == 'diastolic' || key == 'pulse' || 
-          key == 'spO2' || key == 'pulseRate') {
+      if (key == 'systolic' ||
+          key == 'diastolic' ||
+          key == 'pulse' ||
+          key == 'spO2' ||
+          key == 'pulseRate') {
         _currentData[key] = int.tryParse(value) ?? 0;
       } else if (key == 'temperature' || key == 'glucose') {
         _currentData[key] = double.tryParse(value) ?? 0.0;
@@ -372,20 +425,20 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
         _currentData[key] = value;
       }
     });
-    
+
     widget.onValueChanged(_currentData);
   }
 
   String? _validateBloodPressure(String? value, bool isSystolic) {
     final intValue = int.tryParse(value ?? '');
     if (intValue == null) return 'Invalid number';
-    
+
     if (isSystolic) {
       if (intValue < 70 || intValue > 250) return 'Range: 70-250';
     } else {
       if (intValue < 40 || intValue > 150) return 'Range: 40-150';
     }
-    
+
     return null;
   }
 
@@ -406,28 +459,83 @@ class _ReadingValueDisplayState extends State<ReadingValueDisplay> {
   String? _validateTemperature(String? value) {
     final doubleValue = double.tryParse(value ?? '');
     if (doubleValue == null) return 'Invalid number';
-    
+
     final unit = _currentData['unit'] ?? '°C';
     if (unit == '°C') {
       if (doubleValue < 30.0 || doubleValue > 45.0) return 'Range: 30-45°C';
     } else {
       if (doubleValue < 86.0 || doubleValue > 113.0) return 'Range: 86-113°F';
     }
-    
+
     return null;
   }
 
   String? _validateGlucose(String? value) {
     final doubleValue = double.tryParse(value ?? '');
     if (doubleValue == null) return 'Invalid number';
-    
+
     final unit = _currentData['unit'] ?? 'mg/dL';
     if (unit == 'mg/dL') {
       if (doubleValue < 20.0 || doubleValue > 600.0) return 'Range: 20-600';
     } else {
       if (doubleValue < 1.1 || doubleValue > 33.3) return 'Range: 1.1-33.3';
     }
-    
+
     return null;
+  }
+
+  /// Get color for blood pressure category
+  Color _getCategoryColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'normal':
+        return Colors.green;
+      case 'elevated':
+        return Colors.orange;
+      case 'high blood pressure stage 1':
+        return Colors.deepOrange;
+      case 'high blood pressure stage 2':
+        return Colors.red;
+      case 'hypertensive crisis':
+        return Colors.red.shade900;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// Build metric card for additional BP metrics
+  Widget _buildMetricCard(String title, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.greyLight),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textSecondary),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 }

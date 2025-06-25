@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:provider/provider.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
 import '../services/permission_service.dart';

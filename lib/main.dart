@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
-import 'services/auth_provider.dart';
-import 'services/ocr_provider.dart';
 import 'screens/camera_screen.dart';
+import 'screens/gallery_picker_screen.dart';
+import 'screens/capture_guidelines_screen.dart';
+import 'screens/image_preview_screen.dart';
+import 'screens/ocr_results_screen.dart';
+import 'services/ocr_provider.dart';
 
 void main() {
   runApp(const OcrMedicalApp());
@@ -15,13 +18,44 @@ class OcrMedicalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const HomeScreen(),
-      debugShowCheckedModeBanner: false,
+    return ChangeNotifierProvider(
+      create: (context) => OcrProvider(),
+      child: MaterialApp(
+        title: AppConstants.appName,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const HomeScreen(),
+        debugShowCheckedModeBanner: false,
+        routes: {
+          '/camera': (context) => const CameraScreen(),
+          '/gallery-picker': (context) => const GalleryPickerScreen(),
+        },
+        onGenerateRoute: (settings) {
+          switch (settings.name) {
+            case '/capture-guidelines':
+              return MaterialPageRoute(
+                builder: (context) => const CaptureGuidelinesScreen(),
+              );
+            case '/image-preview':
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) => ImagePreviewScreen(
+                  imagePath: args['imagePath'],
+                  deviceType: args['deviceType'],
+                ),
+              );
+            case '/ocr-results':
+              final args = settings.arguments as Map<String, dynamic>;
+              return MaterialPageRoute(
+                builder: (context) =>
+                    OcrResultsScreen(reading: args['reading']),
+              );
+            default:
+              return null;
+          }
+        },
+      ),
     );
   }
 }
