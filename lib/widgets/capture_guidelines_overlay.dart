@@ -205,7 +205,7 @@ class CaptureGuidelinesOverlay extends StatelessWidget {
                   ),
                 ],
               ),
-            )).toList(),
+            )),
           ],
         ),
       ),

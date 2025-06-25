@@ -230,7 +230,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
                   ),
                 ),
               )
-              .toList(),
+              ,
         ],
       ),
     );
@@ -420,7 +420,7 @@ class _GalleryPickerScreenState extends State<GalleryPickerScreen> {
                     ),
                   ),
                 )
-                .toList(),
+                ,
             const SizedBox(height: 12),
             const Text(
               'You can still proceed, but OCR accuracy may be reduced.',

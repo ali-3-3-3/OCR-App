@@ -153,7 +153,7 @@ class DeviceTypeSelectorExpanded extends StatelessWidget {
         ...MedicalDeviceType.values
             .where((type) => type != MedicalDeviceType.unknown)
             .map((type) => _buildDeviceTypeTile(context, type))
-            .toList(),
+            ,
       ],
     );
   }

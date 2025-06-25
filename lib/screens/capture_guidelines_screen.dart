@@ -256,7 +256,7 @@ class _CaptureGuidelinesScreenState extends State<CaptureGuidelinesScreen> {
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );

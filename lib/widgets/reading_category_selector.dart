@@ -74,7 +74,7 @@ class ReadingCategorySelectorExpanded extends StatelessWidget {
         const SizedBox(height: 12),
         ...ReadingCategory.values
             .map((category) => _buildCategoryTile(context, category))
-            .toList(),
+            ,
       ],
     );
   }

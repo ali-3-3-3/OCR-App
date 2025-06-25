@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ocr_app/screens/gallery_picker_screen.dart';
-import 'package:ocr_app/constants/app_constants.dart';
 
 void main() {
   group('GalleryPickerScreen', () {
