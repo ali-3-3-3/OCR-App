@@ -1,3 +1,2 @@
-# ocr_app
+# OCR-App
 
-A new Flutter project.
